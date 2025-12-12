@@ -3,7 +3,7 @@ import streamlit as st
 # Configuración inicial de la página
 st.set_page_config(
     page_title="SolMar",
-    page_icon="🌞",  # puedes eliminar el icono si prefieres algo más formal
+    page_icon="",  # puedes eliminar el icono si prefieres algo más formal
     layout="wide"
 )
 

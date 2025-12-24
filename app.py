@@ -91,8 +91,10 @@ def authenticate(username: str, password: str):
 def login():
     st.markdown("## Acceso a SolMar")
 
+    usuarios = list(st.secrets["auth"]["users"].keys())
+
     with st.form("login_form"):
-        user = st.text_input("Usuario")
+        user = st.selectbox("Usuario", options=usuarios)
         pwd = st.text_input("Contraseña", type="password")
         ok = st.form_submit_button("Ingresar")
 

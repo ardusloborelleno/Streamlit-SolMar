@@ -16,23 +16,31 @@ st.set_page_config(
 # --------------------------------------------------
 HIDE_STREAMLIT_UI = """
 <style>
-    header[data-testid="stHeader"] { display: none !important; }
-    div[data-testid="stToolbar"] { display: none !important; }
-    button[kind="header"] { display: none !important; }
-    footer { visibility: hidden !important; height: 0 !important; }
+header[data-testid="stHeader"] {
+    display: none !important;
+}
+div[data-testid="stToolbar"] {
+    display: none !important;
+}
+button[kind="header"] {
+    display: none !important;
+}
+footer {
+    visibility: hidden !important;
+    height: 0 !important;
+}
 </style>
 """
 st.markdown(HIDE_STREAMLIT_UI, unsafe_allow_html=True)
 
 # --------------------------------------------------
-# Generador temporal de hash (ADMIN)
+# Generador de hash (USO ADMINISTRATIVO)
 # --------------------------------------------------
 def generate_hash(password: str) -> str:
     hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
     return hashed.decode("utf-8")
 
 st.markdown("### 🔐 Generador de hash (uso administrativo)")
-
 with st.form("hash_generator"):
     raw_password = st.text_input("Contraseña a hashear", type="password")
     submit = st.form_submit_button("Generar hash")
@@ -48,8 +56,12 @@ st.divider()
 # --------------------------------------------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
+
 if "username" not in st.session_state:
     st.session_state.username = None
+
+if "role" not in st.session_state:
+    st.session_state.role = None
 
 # --------------------------------------------------
 # Autenticación
@@ -57,14 +69,21 @@ if "username" not in st.session_state:
 def verify_password(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode(), hashed.encode())
 
-def authenticate(username: str, password: str) -> bool:
+def authenticate(username: str, password: str):
     users = st.secrets["auth"]["users"]
     passwords = st.secrets["auth"]["passwords"]
 
     if username not in users:
-        return False
+        return None
 
-    return verify_password(password, passwords.get(username, ""))
+    hashed = passwords.get(username)
+    if not hashed:
+        return None
+
+    if not verify_password(password, hashed):
+        return None
+
+    return users[username]["role"]
 
 # --------------------------------------------------
 # Login
@@ -78,9 +97,12 @@ def login():
         ok = st.form_submit_button("Ingresar")
 
         if ok:
-            if authenticate(user, pwd):
+            role = authenticate(user, pwd)
+
+            if role:
                 st.session_state.authenticated = True
                 st.session_state.username = user
+                st.session_state.role = role
                 st.rerun()
             else:
                 st.error("Usuario o contraseña incorrectos")
@@ -93,6 +115,7 @@ if not st.session_state.authenticated:
     st.stop()
 
 # --------------------------------------------------
-# App protegida
+# App protegida (temporal)
 # --------------------------------------------------
 st.success(f"Bienvenido, {st.session_state.username}")
+st.write("Rol:", st.session_state.role)

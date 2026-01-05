@@ -33,23 +33,7 @@ footer {
 """
 st.markdown(HIDE_STREAMLIT_UI, unsafe_allow_html=True)
 
-# --------------------------------------------------
-# Generador de hash (USO ADMINISTRATIVO)
-# --------------------------------------------------
-def generate_hash(password: str) -> str:
-    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-    return hashed.decode("utf-8")
 
-st.markdown("### 🔐 Generador de hash (uso administrativo)")
-with st.form("hash_generator"):
-    raw_password = st.text_input("Contraseña a hashear", type="password")
-    submit = st.form_submit_button("Generar hash")
-
-    if submit and raw_password:
-        st.code(generate_hash(raw_password), language="text")
-        st.info("Copia este hash y pégalo en Streamlit → Settings → Secrets")
-
-st.divider()
 
 # --------------------------------------------------
 # Estado de sesión

@@ -1,5 +1,8 @@
 import streamlit as st
 import bcrypt
+import gspread
+from google.oauth2.service_account import Credentials
+from datetime import datetime
 
 # --------------------------------------------------
 # Configuración de la página
@@ -32,9 +35,6 @@ footer {
 </style>
 """
 st.markdown(HIDE_STREAMLIT_UI, unsafe_allow_html=True)
-
-
-
 
 # --------------------------------------------------
 # Estado de sesión
@@ -102,8 +102,51 @@ if not st.session_state.authenticated:
     st.stop()
 
 # --------------------------------------------------
-# App protegida (temporal)
+# Conexión a Google Sheets
+# --------------------------------------------------
+def get_gsheet():
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+
+    credentials = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=scopes
+    )
+
+    client = gspread.authorize(credentials)
+
+    sheet_id = st.secrets["google_sheets"]["sheet_id"]
+    sheet = client.open_by_key(sheet_id).sheet1
+
+    return sheet
+
+# --------------------------------------------------
+# App protegida
 # --------------------------------------------------
 st.success(f"Bienvenido, {st.session_state.username}")
 st.write("Rol:", st.session_state.role)
 
+st.divider()
+st.subheader("Registro de actividad")
+
+with st.form("registro_form"):
+    comentario = st.text_input("Comentario")
+    guardar = st.form_submit_button("Guardar registro")
+
+    if guardar:
+        if comentario.strip() == "":
+            st.warning("El comentario no puede estar vacío")
+        else:
+            try:
+                sheet = get_gsheet()
+                sheet.append_row([
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    st.session_state.username,
+                    st.session_state.role,
+                    comentario
+                ])
+                st.success("Registro guardado correctamente")
+            except Exception as e:
+                st.error(f"Error al guardar el registro: {e}")
